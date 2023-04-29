@@ -1,0 +1,6 @@
+dist/
+eng.traineddata
+node_modules/
+.vscode/sftp.json
+.env
+node_modules
