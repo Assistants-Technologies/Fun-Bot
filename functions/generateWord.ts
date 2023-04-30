@@ -15,39 +15,40 @@ const monthNames = [
     "december"
 ]
 
+/**
+ *  Get a random word from the Datamuse API.
+ * @returns The random word.
+ * @example
+ * const word = await getRandomWord()
+ * if (!word) return
+ *
+ * console.log(word) // "hello"
+ * **/
 export async function getRandomWord(): Promise<string> {
     try {
-        const response = await axios.get("https://api.datamuse.com/words", {
-            params: {
-                sp: "^[a-zA-Z]+$", // matches only letters
-                max: 1,
-                md: "p",
-                v: "enwiki" // only return words known to be in the dictionary
-            }
-        })
+        const response = await axios.get("https://random-word-api.herokuapp.com/word")
 
-        console.log(response.data)
+        console.log(response.data[0])
 
-        // const word = response.data[Math.floor(Math.random() * response.data.length)].word
+        const word = response.data[0]
 
-        // if (!isNaN(parseInt(word))) {
-        //     return getRandomWord()
-        // }
-        // if (word.includes(" ")) {
-        //     return getRandomWord()
-        // }
-        // if (word.length < 5 || word.length > 15) {
-        //     return getRandomWord()
-        // }
-        // if (monthNames.includes(word)) {
-        //     return getRandomWord()
-        // }
-        // if (/^[a-zA-Z]+$/.test(word) === false) {
-        //     return getRandomWord()
-        // }
+        if (!isNaN(parseInt(word))) {
+            return getRandomWord()
+        }
+        if (word.includes(" ")) {
+            return getRandomWord()
+        }
+        if (word.length < 5 || word.length > 15) {
+            return getRandomWord()
+        }
+        if (monthNames.includes(word)) {
+            return getRandomWord()
+        }
+        if (/^[a-zA-Z]+$/.test(word) === false) {
+            return getRandomWord()
+        }
 
-        return "poo"
-
+        return word
         // return word
     } catch (error) {
         console.error(error)
