@@ -56,8 +56,6 @@ export default async function () {
         // Schedule the function to run after the random delay
         setTimeout(myFunction, randomDelay)
     }
-
-    scheduleFunction()
 }
 
 class Unscramble {
