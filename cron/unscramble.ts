@@ -85,8 +85,11 @@ class Unscramble {
 
         console.log(word)
 
+        word = word.charAt(0).toUpperCase() + word.slice(1)
+
         this.word = word
         this.scrambled = this.scramble(word)
+        if (this.scrambled === word) return this.generate()
 
         console.log(this.scrambled)
 

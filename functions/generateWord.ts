@@ -26,11 +26,9 @@ const monthNames = [
  * **/
 export async function getRandomWord(): Promise<string> {
     try {
-        const response = await axios.get("https://random-word-api.herokuapp.com/word")
+        const response = await axios.get("https://random-word-api.herokuapp.com/all")
 
-        console.log(response.data[0])
-
-        const word = response.data[0]
+        const word: string = response.data[Math.floor(Math.random() * response.data.length)]
 
         if (!isNaN(parseInt(word))) {
             return getRandomWord()
