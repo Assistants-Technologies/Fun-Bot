@@ -8,6 +8,7 @@ export default async function () {
     const channel = client.channels.cache.get(
         process.env.UNSRAMBLE_CHANNEL_ID as string
     ) as TextChannel
+
     myFunction()
 
     async function myFunction() {
@@ -65,9 +66,7 @@ class Unscramble {
      **/
     private scrambled!: string
 
-    constructor() {
-        this.generate()
-    }
+    constructor() {}
 
     /**
      * Fetches a random word from the API and scrambles it.
@@ -86,11 +85,8 @@ class Unscramble {
 
         console.log(word)
 
-        word = word.charAt(0).toUpperCase() + word.slice(1)
-
         this.word = word
         this.scrambled = this.scramble(word)
-        if (this.scrambled === word) return this.generate()
 
         console.log(this.scrambled)
 
@@ -106,16 +102,10 @@ class Unscramble {
      * const word = await scrambler.generate()
      * if (!word) return
      *
-     * scrambler.check("hello") // false
-     * scrambler.check(word) // true
+     * scrambler.check("lleho") // false
+     * scrambler.check("hello") // true
      **/
     public check(word: string): boolean {
-        console.log({
-            word,
-            scrambled: this.scrambled,
-            correct: word === this.scrambled,
-            realWord: this.word
-        })
         return word === this.word.toLowerCase()
     }
 
