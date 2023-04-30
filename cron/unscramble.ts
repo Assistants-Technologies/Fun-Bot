@@ -11,10 +11,6 @@ export default async function () {
     myFunction()
 
     async function myFunction() {
-        console.log({
-            word: await new Unscramble().generate()
-        })
-
         const scrambler = new Unscramble()
 
         const word = await scrambler.generate()
@@ -79,7 +75,7 @@ class Unscramble {
 
             this.scrambled = scrambled
 
-            console.log({ scram: this.scrambled })
+            console.log(this.scrambled)
 
             return scrambled
         }
