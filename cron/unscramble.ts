@@ -36,7 +36,7 @@ export default async function () {
 
             collector.on("end", () => {
                 if (!correct) {
-                    msg.channel.send(`Time's up! The word was **${scrambler.getWord()}**.`)
+                    msg.channel.send(`Time's up! The word was **${scrambler.word}**.`)
                 }
             })
         })
@@ -56,7 +56,13 @@ export default async function () {
 }
 
 class Unscramble {
-    private word!: string
+    /**
+     *  The orginal word.
+     **/
+    public word!: string
+    /**
+     * The scrambled word.
+     **/
     private scrambled!: string
 
     constructor() {
@@ -129,22 +135,5 @@ class Unscramble {
         }
 
         return wordArr.join("")
-    }
-
-    /**
-     * Gets the unscrambled word.
-     * @returns The unscrambled word.
-     * @example
-     * const scrambler = new Unscramble()
-     * const word = await scrambler.generate()
-     * if (!word) return
-     *
-     * console.log(scrambler.getWord()) // "hello"
-     * console.log(word) // "lehlo"
-     * console.log(scrambler.check(word)) // false
-     * console.log(scrambler.check(scrambler.getWord())) // true
-     **/
-    public getWord(): string {
-        return this.word
     }
 }
