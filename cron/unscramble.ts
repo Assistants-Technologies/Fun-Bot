@@ -23,7 +23,7 @@ export default async function () {
 
         channel.send(`Unscramble this word: **${word}**`).then((msg) => {
             const collector = new MessageCollector(channel, {
-                time: 30000,
+                time: 60 * 1000,
                 max: 1
             })
 
