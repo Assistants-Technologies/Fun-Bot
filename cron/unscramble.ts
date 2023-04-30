@@ -14,32 +14,33 @@ export default async function () {
         const scrambler = new Unscramble()
 
         const word = await scrambler.generate()
-        if (!word) return
-        if (!channel) return
+        if (!word || !channel) return
 
         channel.send(`Unscramble this word: **${word}**`).then((msg) => {
-            const collector = new MessageCollector(channel, {
-                time: 60 * 1000,
-                max: 1
-            })
+            const collectorOptions = { time: 15 * 60 * 1000 }
+            const collector = new MessageCollector(channel, collectorOptions)
 
             let correct = false
 
             collector.on("collect", (m) => {
+                if (!m.reference || m.reference.messageId !== msg.id || m.author.bot) return
+
                 if (scrambler.check(m.content.toLowerCase())) {
                     correct = true
                     msg.channel.send(`:tada: You got it right, ${m.author}!`)
+                    collector.stop()
                 } else {
                     msg.channel.send(`Sorry, ${m.author}, that's not the correct word.`)
                 }
-                collector.stop()
             })
 
             collector.on("end", () => {
-                if (!correct)
+                if (!correct) {
                     msg.channel.send(`Time's up! The word was **${scrambler.getWord()}**.`)
+                }
             })
         })
+
         scheduleFunction()
     }
 
@@ -57,55 +58,93 @@ export default async function () {
 class Unscramble {
     private word!: string
     private scrambled!: string
-    public check: (word: string) => boolean
-    public generate: () => Promise<string | undefined>
-    public getWord: () => string
-    private scramble: (word: string) => string
 
     constructor() {
-        this.generate = async (): Promise<string | undefined> => {
-            const word = await getRandomWord()
-            if (!word) return undefined
+        this.generate()
+    }
 
-            console.log(word)
+    /**
+     * Fetches a random word from the API and scrambles it.
+     *
+     * @returns The scrambled word.
+     * @example
+     * const scrambler = new Unscramble()
+     * const word = await scrambler.generate()
+     * if (!word) return
+     *
+     * console.log(word) // "lehlo"
+     */
+    public async generate(): Promise<string | undefined> {
+        let word = await getRandomWord()
+        if (!word) return undefined
 
-            this.word = word
+        console.log(word)
 
-            const scrambled = this.scramble(word)
+        word = word.charAt(0).toUpperCase() + word.slice(1)
 
-            this.scrambled = scrambled
+        this.word = word
+        this.scrambled = this.scramble(word)
+        if (this.scrambled === word) return this.generate()
 
-            console.log(this.scrambled)
+        console.log(this.scrambled)
 
-            return scrambled
+        return this.scrambled
+    }
+
+    /**
+     * Checks if the given word is the correct word.
+     * @param word The word to check.
+     * @returns Whether the word is correct.
+     * @example
+     * const scrambler = new Unscramble()
+     * const word = await scrambler.generate()
+     * if (!word) return
+     *
+     * scrambler.check("hello") // false
+     * scrambler.check(word) // true
+     **/
+    public check(word: string): boolean {
+        console.log({
+            word,
+            scrambled: this.scrambled,
+            correct: word === this.scrambled,
+            realWord: this.word
+        })
+        return word === this.word.toLowerCase()
+    }
+
+    /**
+     * Scrambles the given word.
+     * @param word The word to scramble.
+     * @returns The scrambled word.
+     *
+     **/
+    private scramble(word: string): string {
+        const wordArr = word.split("")
+        const length = wordArr.length
+
+        for (let i = length - 1; i > 0; i--) {
+            const randomIndex = Math.floor(Math.random() * (i + 1))
+            ;[wordArr[i], wordArr[randomIndex]] = [wordArr[randomIndex], wordArr[i]]
         }
 
-        this.check = (word: string) => {
-            return word === this.word.toLowerCase()
-        }
+        return wordArr.join("")
+    }
 
-        this.scramble = (word: string) => {
-            const wordArr = word.split("")
-            let currentIndex = wordArr.length
-
-            while (currentIndex !== 0) {
-                const randomIndex = Math.floor(Math.random() * currentIndex)
-                currentIndex--
-
-                // Swap elements
-                ;[wordArr[currentIndex], wordArr[randomIndex]] = [
-                    wordArr[randomIndex],
-                    wordArr[currentIndex]
-                ]
-            }
-
-            return wordArr.join("")
-        }
-
-        this.getWord = () => {
-            return this.word
-        }
-
-        return this
+    /**
+     * Gets the unscrambled word.
+     * @returns The unscrambled word.
+     * @example
+     * const scrambler = new Unscramble()
+     * const word = await scrambler.generate()
+     * if (!word) return
+     *
+     * console.log(scrambler.getWord()) // "hello"
+     * console.log(word) // "lehlo"
+     * console.log(scrambler.check(word)) // false
+     * console.log(scrambler.check(scrambler.getWord())) // true
+     **/
+    public getWord(): string {
+        return this.word
     }
 }
