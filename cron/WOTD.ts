@@ -2,13 +2,13 @@ import { CronJob } from "cron"
 
 export default function () {
     const job = new CronJob(
-        process.env.WOTD_CRON as string,
+        "0 0 0 * * *",
         () => {
             console.log("WOTD")
         },
         null,
         true,
-        "America/New_York"
+        "Europe/London"
     )
 
     job.start()

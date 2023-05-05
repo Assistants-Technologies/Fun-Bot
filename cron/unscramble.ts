@@ -2,7 +2,7 @@ import axios from "axios"
 import { getRandomWord } from "../functions/generateWord"
 import client from "../bot"
 
-import { TextChannel, MessageCollector } from "discord.js"
+import { TextChannel, MessageCollector, EmbedBuilder } from "discord.js"
 
 export default async function () {
     const channel = client.channels.cache.get(
@@ -28,7 +28,6 @@ export default async function () {
 
                 if (scrambler.check(m.content.toLowerCase())) {
                     correct = true
-                    msg.channel.send(`:tada: You got it right, ${m.author}!`)
                     collector.stop()
                 } else {
                     msg.channel.send(`Sorry, ${m.author}, that's not the correct word.`)
@@ -36,13 +35,43 @@ export default async function () {
             })
 
             collector.on("end", () => {
-                if (!correct) {
-                    msg.channel.send(`Time's up! The word was **${scrambler.word}**.`)
-                }
+                end(correct, scrambler)
             })
         })
 
         scheduleFunction()
+    }
+
+    function end(correct: boolean, scrambler: Unscramble) {
+        const embed = new EmbedBuilder()
+            .setTitle("Unscramble Answer")
+            .setDescription(
+                `${correct ? ":tada: You got it right!" : ":x: No one guessed it in time!"}`
+            )
+            .addFields([
+                {
+                    name: "Scrambled Word",
+                    value: scrambler.word
+                },
+                {
+                    name: "Definition",
+                    value: clean(scrambler.definition)
+                },
+                {
+                    name: "Usage",
+                    value: clean(scrambler.usage)
+                }
+            ])
+            .setColor("Purple")
+            .setFooter({
+                text: "Powered by Wordnik",
+                iconURL: "https://www.wordnik.com/favicon.ico"
+            })
+            .setTimestamp()
+
+        channel.send({
+            embeds: [embed]
+        })
     }
 
     function scheduleFunction() {
@@ -56,11 +85,52 @@ export default async function () {
     }
 }
 
+function clean(text: string) {
+    const regex = /<(?!\/?(b|i|s|u))\/?[\w\s="-:;.#@%]+>/g
+    const discordText = text
+        .replace(regex, "")
+        .replace(/<\/?b>/g, "**")
+        .replace(/<\/?i>/g, "*")
+        .replace(/<\/?s>/g, "~~")
+        .replace(/<\/?u>/g, "__")
+
+    return discordText
+}
+/**
+ * A class to generate a scrambled word.
+ *
+ * @example
+ * const scrambler = new Unscramble()
+ * const word = await scrambler.generate()
+ * if (!word) return
+ *
+ * console.log(word) // "lehlo"
+ *
+ * const definition = scrambler.definition
+ * const usage = scrambler.usage
+ *
+ * console.log(definition) // "A word used to greet someone."
+ * console.log(usage) // "Hello, how are you?"
+ *
+ * const correct = scrambler.check("hello")
+ * console.log(correct) // true
+ *
+ * const correctWord = scrambler.word
+ * console.log(correctWord) // "Hello"
+ */
 class Unscramble {
     /**
      *  The orginal word.
      **/
     public word!: string
+    /**
+     * The definition of the word.
+     * */
+    public definition!: string
+    /**
+     * The usage of the word.
+     * */
+    public usage!: string
     /**
      * The scrambled word.
      **/
@@ -80,8 +150,8 @@ class Unscramble {
      * console.log(word) // "lehlo"
      */
     public async generate(): Promise<string | undefined> {
-        let word = await getRandomWord()
-        if (!word) return undefined
+        let { word, definition, usage, error } = await getRandomWord("easy")
+        if (error) return undefined
 
         console.log(word)
 
@@ -90,6 +160,9 @@ class Unscramble {
         this.word = word
         this.scrambled = this.scramble(word)
         if (this.scrambled === word) return this.generate()
+
+        this.definition = definition
+        this.usage = usage
 
         console.log(this.scrambled)
 

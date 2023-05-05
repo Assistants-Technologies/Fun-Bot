@@ -1,5 +1,7 @@
 import axios from "axios"
 
+import type { WordUsage, WordDefinition, RandomWord } from "../typings/wordAPI"
+
 const monthNames = [
     "january",
     "february",
@@ -24,32 +26,75 @@ const monthNames = [
  *
  * console.log(word) // "hello"
  * **/
-export async function getRandomWord(): Promise<string> {
-    try {
-        const response = await axios.get("https://random-word-api.herokuapp.com/all")
+export async function getRandomWord(difficulty: "easy" | "medium" | "hard"): Promise<{
+    word: string
+    definition: string
+    usage: string
 
-        const word: string = response.data[Math.floor(Math.random() * response.data.length)]
+    error: boolean
+}> {
+    const difficultyLevels = {
+        easy: { minCorpusCount: 50001, maxCorpusCount: 300000 },
+        medium: { minCorpusCount: 10001, maxCorpusCount: 50000 },
+        hard: { minCorpusCount: 1, maxCorpusCount: 10000 }
+    }
+
+    const { minCorpusCount, maxCorpusCount } = difficultyLevels[difficulty] || difficultyLevels.easy
+
+    try {
+        const wordReq = await axios.get<RandomWord>(
+            `https://api.wordnik.com/v4/words.json/randomWord?api_key=c23b746d074135dc9500c0a61300a3cb7647e53ec2b9b658e&minCorpusCount=${minCorpusCount}&maxCorpusCount=${maxCorpusCount}`
+        )
+        const word: string = wordReq.data.word
+
+        const defReq = await axios.get<WordDefinition>(
+            `https://api.wordnik.com/v4/word.json/${word}/definitions?limit=1&api_key=c23b746d074135dc9500c0a61300a3cb7647e53ec2b9b658e`
+        )
+        const useReq = await axios.get<WordUsage>(
+            `https://api.wordnik.com/v4/word.json/${word}/topExample?limit=1&api_key=c23b746d074135dc9500c0a61300a3cb7647e53ec2b9b658e`
+        )
+
+        let definition: string, usage: string
+
+        Array.isArray(defReq.data[0].text)
+            ? (definition = defReq.data[0].text.join())
+            : (definition = defReq.data[0].text)
+
+        Array.isArray(useReq.data.text)
+            ? (usage = useReq.data.text.join())
+            : (usage = useReq.data.text)
 
         if (!isNaN(parseInt(word))) {
-            return getRandomWord()
+            return getRandomWord("easy")
         }
         if (word.includes(" ")) {
-            return getRandomWord()
+            return getRandomWord("easy")
         }
         if (word.length < 5 || word.length > 15) {
-            return getRandomWord()
+            return getRandomWord("easy")
         }
         if (monthNames.includes(word)) {
-            return getRandomWord()
+            return getRandomWord("easy")
         }
         if (/^[a-zA-Z]+$/.test(word) === false) {
-            return getRandomWord()
+            return getRandomWord("easy")
         }
 
-        return word
+        return {
+            word,
+            definition,
+            usage,
+            error: false
+        }
+
         // return word
     } catch (error) {
         console.error(error)
-        return "" // Return empty string if there is an error
+        return {
+            word: "",
+            definition: "",
+            usage: "",
+            error: true
+        }
     }
 }
