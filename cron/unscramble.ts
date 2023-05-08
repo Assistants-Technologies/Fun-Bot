@@ -88,11 +88,12 @@ export default async function () {
 function clean(text: string) {
     const regex = /<(?!\/?(b|i|s|u))\/?[\w\s="-:;.#@%]+>/g
     const discordText = text
-        .replace(regex, "")
         .replace(/<\/?b>/g, "**")
+        .replace(/<\/?strong>/g, "**")
         .replace(/<\/?i>/g, "*")
         .replace(/<\/?s>/g, "~~")
         .replace(/<\/?u>/g, "__")
+        .replace(regex, "")
 
     return discordText
 }
