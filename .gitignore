@@ -3,4 +3,5 @@ eng.traineddata
 node_modules/
 .vscode/sftp.json
 .env
+.npm
 node_modules

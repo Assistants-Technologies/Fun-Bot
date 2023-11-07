@@ -12,31 +12,67 @@ export default async function () {
     myFunction()
 
     async function myFunction() {
+        const ids: string[] = []
+        let counter = 0
+
         const scrambler = new Unscramble()
 
         const word = await scrambler.generate()
         if (!word || !channel) return
 
-        channel.send(`Unscramble this word: **${word}**`).then((msg) => {
-            const collectorOptions = { time: 15 * 60 * 1000 }
-            const collector = new MessageCollector(channel, collectorOptions)
+        const embed = new EmbedBuilder()
+            .setAuthor({
+                name: "Unscramble",
+                iconURL: client.user?.displayAvatarURL()
+            })
+            .setTitle("Unscramble Word")
+            .setDescription(`Unscramble this word: **${word}**`)
+            .setColor("Purple")
+            .setFooter({
+                text: "Powered by Wordnik",
+                iconURL: "https://www.wordnik.com/favicon.ico"
+            })
 
-            let correct = false
+        let msg = await channel.send({
+            embeds: [embed]
+        })
 
-            collector.on("collect", (m) => {
-                if (!m.reference || m.reference.messageId !== msg.id || m.author.bot) return
+        ids.push(msg.id)
 
-                if (scrambler.check(m.content.toLowerCase())) {
-                    correct = true
-                    collector.stop()
-                } else {
-                    msg.channel.send(`Sorry, ${m.author}, that's not the correct word.`)
+        const collectorOptions = { time: 15 * 60 * 1000 }
+        const collector = new MessageCollector(channel, collectorOptions)
+
+        let correct = false
+
+        collector.on("collect", async (m) => {
+            if (
+                m.author.id == process.env.CLIENT_ID ||
+                !m.reference ||
+                !ids.includes(m.reference.messageId as string) ||
+                m.author.bot
+            ) {
+                counter++
+                if (counter >= 5) {
+                    await msg.delete().catch(() => {})
+                    msg = await channel.send({
+                        embeds: [embed]
+                    })
+                    ids.push(msg.id)
+                    counter = 0
                 }
-            })
+                return
+            }
 
-            collector.on("end", () => {
-                end(correct, scrambler)
-            })
+            if (scrambler.check(m.content.toLowerCase())) {
+                correct = true
+                collector.stop()
+            } else {
+                msg.channel.send(`Sorry, ${m.author}, that's not the correct word.`)
+            }
+        })
+
+        collector.on("end", () => {
+            end(correct, scrambler)
         })
 
         scheduleFunction()
@@ -121,7 +157,7 @@ function clean(text: string) {
  */
 class Unscramble {
     /**
-     *  The orginal word.
+     *  The original word.
      **/
     public word!: string
     /**
@@ -151,7 +187,7 @@ class Unscramble {
      * console.log(word) // "lehlo"
      */
     public async generate(): Promise<string | undefined> {
-        let { word, definition, usage, error } = await getRandomWord("easy")
+        let { word, definition, usage, error } = await getRandomWord()
         if (error) return undefined
 
         console.log(word)

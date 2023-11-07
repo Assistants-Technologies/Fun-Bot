@@ -1,13 +1,4 @@
-import { Schema, model, connect, set } from "mongoose"
-
-// import type Question from "./typings/Question"
-
-// const userSchema = new Schema<Question>({
-//     id: { type: String, required: true, unique: true },
-//     query: { type: String, required: true },
-//     answer: { type: String, required: true },
-//     match: { type: Number, default: 50 }
-// })
+import { connect, set } from "mongoose"
 
 set("strictQuery", true)
 
@@ -21,5 +12,3 @@ try {
     console.log("Failed to connect to MongoDB")
     console.error(error)
 }
-
-// export default model<Question>("Questions", userSchema)

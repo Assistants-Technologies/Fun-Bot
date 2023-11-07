@@ -26,7 +26,7 @@ const monthNames = [
  *
  * console.log(word) // "hello"
  * **/
-export async function getRandomWord(difficulty: "easy" | "medium" | "hard"): Promise<{
+export async function getRandomWord(): Promise<{
     word: string
     definition: string
     usage: string
@@ -39,19 +39,20 @@ export async function getRandomWord(difficulty: "easy" | "medium" | "hard"): Pro
         hard: { minCorpusCount: 1, maxCorpusCount: 10000 }
     }
 
-    const { minCorpusCount, maxCorpusCount } = difficultyLevels[difficulty] || difficultyLevels.easy
+    const { minCorpusCount, maxCorpusCount } =
+        difficultyLevels[biasedRandomValue()] || difficultyLevels.easy
 
     try {
         const wordReq = await axios.get<RandomWord>(
-            `https://api.wordnik.com/v4/words.json/randomWord?api_key=c23b746d074135dc9500c0a61300a3cb7647e53ec2b9b658e&minCorpusCount=${minCorpusCount}&maxCorpusCount=${maxCorpusCount}`
+            `https://api.wordnik.com/v4/words.json/randomWord?api_key=${process.env.WORDNIK}&minCorpusCount=${minCorpusCount}&maxCorpusCount=${maxCorpusCount}`
         )
         const word: string = wordReq.data.word
 
         const defReq = await axios.get<WordDefinition>(
-            `https://api.wordnik.com/v4/word.json/${word}/definitions?limit=1&api_key=c23b746d074135dc9500c0a61300a3cb7647e53ec2b9b658e`
+            `https://api.wordnik.com/v4/word.json/${word}/definitions?limit=1&api_key=${process.env.WORDNIK}`
         )
         const useReq = await axios.get<WordUsage>(
-            `https://api.wordnik.com/v4/word.json/${word}/topExample?limit=1&api_key=c23b746d074135dc9500c0a61300a3cb7647e53ec2b9b658e`
+            `https://api.wordnik.com/v4/word.json/${word}/topExample?limit=1&api_key=${process.env.WORDNIK}`
         )
 
         let definition: string, usage: string
@@ -64,21 +65,15 @@ export async function getRandomWord(difficulty: "easy" | "medium" | "hard"): Pro
             ? (usage = useReq.data.text.join())
             : (usage = useReq.data.text)
 
-        if (!isNaN(parseInt(word))) {
-            return getRandomWord("easy")
-        }
-        if (word.includes(" ")) {
-            return getRandomWord("easy")
-        }
-        if (word.length < 5 || word.length > 15) {
-            return getRandomWord("easy")
-        }
-        if (monthNames.includes(word)) {
-            return getRandomWord("easy")
-        }
-        if (/^[a-zA-Z]+$/.test(word) === false) {
-            return getRandomWord("easy")
-        }
+        if (
+            !isNaN(parseInt(word)) ||
+            word.includes(" ") ||
+            word.length < 5 ||
+            word.length > 15 ||
+            monthNames.includes(word) ||
+            /^[a-zA-Z]+$/.test(word) === false
+        )
+            return getRandomWord()
 
         return {
             word,
@@ -97,4 +92,13 @@ export async function getRandomWord(difficulty: "easy" | "medium" | "hard"): Pro
             error: true
         }
     }
+}
+
+function biasedRandomValue() {
+    const probabilities = [0.7, 0.2, 0.1] // Bias toward 1, less toward 2, small chance for 3
+    const rand = Math.random()
+
+    if (rand < probabilities[0]) return "easy"
+    if (rand < probabilities[0] + probabilities[1]) return "medium"
+    return "hard"
 }
